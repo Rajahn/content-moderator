@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Moderator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2D3436;
+            --secondary: #0984E3;
+            --accent: #00CEC9;
+            --danger: #D63031;
+            --success: #00B894;
+            --background: #F7F9FC;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--background);
+            color: var(--primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 1rem;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--accent), #74B9FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            margin: 1rem 0;
+            background: #F8FAFC;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(9,132,227,0.1);
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--secondary), var(--accent));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(9,132,227,0.2);
+        }
+
+        button:disabled {
+            background: #CBD5E0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--secondary);
+        }
+
+        .loading .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .result {
+            display: none;
+            margin-top: 1rem;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .safe {
+            background: linear-gradient(45deg, #81ECEC, #55EFC4);
+            color: #006266;
+        }
+
+        .unsafe {
+            background: linear-gradient(45deg, #FFB8B8, #FF7675);
+            color: #6B1D1D;
+        }
+
+        .details {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                width: 95%;
+                margin: 1rem auto;
+            }
+
+            .header {
+                padding: 1.5rem;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .content-box {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <h1 class="title">AI Content Moderator</h1>
+        <p class="subtitle">Advanced content analysis powered by OpenAI</p>
+    </header>
+
+    <main class="content-box">
+        <textarea id="content" placeholder="Enter your content for analysis..."></textarea>
+        <button id="checkButton" onclick="checkContent()">
+            <i class="fas fa-shield-alt"></i>
+            Analyze Content
+        </button>
+        <div id="loading" class="loading">
+            <i class="fas fa-circle-notch spinner"></i>
+            Analyzing content...
+        </div>
+        <div id="result" class="result"></div>
+    </main>
+
+<!--    <section class="content-box stats">-->
+<!--        <div class="stat-card">-->
+<!--            <i class="fas fa-bolt"></i>-->
+<!--            <h3>Real-time Analysis</h3>-->
+<!--        </div>-->
+<!--        <div class="stat-card">-->
+<!--            <i class="fas fa-brain"></i>-->
+<!--            <h3>AI Powered</h3>-->
+<!--        </div>-->
+<!--        <div class="stat-card">-->
+<!--            <i class="fas fa-lock"></i>-->
+<!--            <h3>Secure</h3>-->
+<!--        </div>-->
+<!--    </section>-->
+</div>
+
+<script>
+    async function checkContent() {
+        const content = document.getElementById('content').value;
+        const button = document.getElementById('checkButton');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        if (!content.trim()) {
+            alert('Please enter some content to analyze');
+            return;
+        }
+
+        button.disabled = true;
+        loading.style.display = 'block';
+        result.style.display = 'none';
+
+        try {
+            const response = await fetch('/api/moderate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: content })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Request failed');
+            }
+
+            const results = data.results[0];
+            result.style.display = 'block';
+
+            if (results.flagged) {
+                result.className = 'result unsafe';
+                let flaggedCategories = Object.entries(results.categories)
+                    .filter(([_, value]) => value)
+                    .map(([key, _]) => key.replace(/([A-Z])/g, ' $1').toLowerCase())
+                    .join(', ');
+
+                result.innerHTML = `
+                        <div>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Content flagged for review
+                        </div>
+                        <div class="details">
+                            <strong>Flagged categories:</strong> ${flaggedCategories}
+                        </div>
+                    `;
+            } else {
+                result.className = 'result safe';
+                result.innerHTML = `
+                        <div>
+                            <i class="fas fa-check-circle"></i>
+                            Content appears to be safe
+                        </div>
+                        <div class="details">
+                            All safety checks passed
+                        </div>
+                    `;
+            }
+        } catch (error) {
+            result.className = 'result unsafe';
+            result.innerHTML = `
+                    <div>
+                        <i class="fas fa-times-circle"></i>
+                        Analysis failed
+                    </div>
+                    <div class="details">
+                        ${error.message}
+                    </div>
+                `;
+            result.style.display = 'block';
+        } finally {
+            button.disabled = false;
+            loading.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>
